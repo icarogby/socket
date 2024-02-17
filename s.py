@@ -1,23 +1,28 @@
 import socket
+import threading
 
-servidor = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-endereco_servidor = ('localhost', 12345)
-servidor.bind(endereco_servidor)
-servidor.listen(1)
-
-print('Aguardando conexão...')
-
-# Aceitar a conexão do cliente
-while True:
-    conexao, endereco_cliente = servidor.accept()
-    print(f'Conectado com {endereco_cliente}')
+def handle_client(client_socket, address):
+    print(f"Accepted connection from {address}")
 
     while True:
-        # Receber dados do cliente
-        dados = conexao.recv(1024)
-        print(f'Mensagem do cliente: {dados.decode()}')
+        data = client_socket.recv(1024)
+        if not data:
+            break
+        print(f"Received from {address}: {data.decode('utf-8')}")
 
-        # Enviar uma mensagem ao cliente
-        mensagem_servidor = 'Olá, cliente!'
-        conexao.send(mensagem_servidor.encode())
+    print(f"Connection from {address} closed")
 
+def start_server():
+    server = socket.socket(socket.AF_INET6, socket.SOCK_STREAM)
+    server.bind(('2804:25ac:40e:8b00:a13b:e094:9f58:820b', 8888))
+    server.listen(5)
+
+    print("Server listening on port 8888...")
+
+    while True:
+        client_socket, addr = server.accept()
+        client_handler = threading.Thread(target=handle_client, args=(client_socket, addr))
+        client_handler.start()
+
+if __name__ == "__main__":
+    start_server()
